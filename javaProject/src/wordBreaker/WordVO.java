@@ -48,6 +48,6 @@ public class WordVO extends Thread {
 			}
 		}
 		
-		frame.wordList.remove( this );
+		frame.wordVoList.remove( this );
 	}
 }

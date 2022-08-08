@@ -1,0 +1,7 @@
+abc 120
+ooo 100
+ttt 200
+kkk 90
+zzz 200
+ppp 500
+www 76
