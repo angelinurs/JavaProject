@@ -12,7 +12,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,10 +20,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 
 import javax.swing.ImageIcon;
@@ -61,7 +59,7 @@ public class WordBreaker extends JFrame {
 	// ex-source path
 	final String imageFilename = "src/Source/kakao.jpg";
 	final String wordFilename = "src/Source/word_list.txt";
-	final String savefile = "src/savedata/savefile.txt";
+	final String savefile = "src/savedata/savefile.obj";
 	
 	// user name
 	String username;
@@ -97,6 +95,9 @@ public class WordBreaker extends JFrame {
 	
 	boolean isStart = false;
 	int dropTime = 1000;
+	
+	// condition isStartButtonClicked
+	boolean isStartButtonClicked = false;
 
 	// constructor
 	public WordBreaker() {
@@ -126,22 +127,31 @@ public class WordBreaker extends JFrame {
 //		cards.show( this.getContentPane(), "game" );
 	}
 	
-	// set event
+	/* *****************
+	 * set event
+	 * - windowClosing ( window, exitItem )
+	 * - login ( idTextfield, loginBtn )
+	 * - game start ( startBtn )
+	 * - typing action ( wordInputTextField )
+	 */
 	private void setEvent() {
+		// window exit
 		addWindowListener( new WindowAdapter() {
 			
 			@Override public void windowClosing(WindowEvent e) {
-				System.exit( 0 );
+				saveAndExit();
 			}
 		});
 		
+		// exit menu
 		exitItem.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
-				System.exit( 0 );
+				saveAndExit();
 			}
 		});
 		
+		// game login -> enter action
 		idTextfield.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
@@ -150,6 +160,7 @@ public class WordBreaker extends JFrame {
 			}
 		});
 		
+		// game login -> click button action
 		loginBtn.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
@@ -164,6 +175,9 @@ public class WordBreaker extends JFrame {
 		startBtn.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
+				// did it check that user playing game 
+				isStartButtonClicked = true;
+				
 				if( thread == null ) {
 					thread = new Thread() {
 						
@@ -195,6 +209,7 @@ public class WordBreaker extends JFrame {
 			}
 		});
 		
+		// when play game, enter typing action
 		wordInputTextField.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
@@ -218,71 +233,38 @@ public class WordBreaker extends JFrame {
 							scoreLabel.setText( String.valueOf( score += 10 ) );
 						}
 					}
+					
 					wordInputTextField.setText( "" );
 				}
 			}
 		});
 		
+		// view rank menu action 
 		viewItem.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
 				
-				FileInputStream fis = null;
-				ObjectInputStream ois = null;
+				String mesg = null;
 				
-				try {
-					fis = new FileInputStream( new File( savefile ) );
-					ois = new ObjectInputStream( fis );
-					
-					Object o = ois.readObject();
-					
-					if( o instanceof ArrayList ) {
-						ranklist = (ArrayList<UserRank>) o;
-					}
-					
-					// each score data sort
-					// Comparator interface compare method override
-					Collections.sort( ranklist, new Comparator< UserRank >() {
-
-						@Override public int compare(UserRank o1, UserRank o2) {
-							
-							int pre = Integer.parseInt( o1.getScore() );
-							int post = Integer.parseInt( o2.getScore() );
-							
-							return ( pre < post )? 1 :
-									( pre > post )? -1 : 0;
-						}
-					});
+				if( loadRankdDataFile() ) {
 					
 					Iterator<UserRank> it = ranklist.iterator();
 					
 					StringBuffer sb = new StringBuffer();
 					while( it.hasNext() ) {
 						UserRank userScore = it.next();
-						sb.append( userScore.getName() );
-						sb.append( " : " );
-						sb.append( userScore.getScore() );
+						sb.append( userScore.toString() );
 						sb.append( "\n" );
-//						System.out.println( userScore[0] + ", " + userScore[1] );
 					}
 					
-					JOptionPane.showMessageDialog( null, sb.toString(), "User Rank", JOptionPane.INFORMATION_MESSAGE );
+					mesg = sb.toString();
+				} else {
+					mesg = "You are first user!!"; 
 					
-				} catch (FileNotFoundException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} finally {
-						try {
-							if( fis != null ) fis.close();
-							if( ois != null ) ois.close();
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
 				}
+				
+				JOptionPane.showMessageDialog( null, mesg, "User Rank", JOptionPane.INFORMATION_MESSAGE );
+				
 			}
 		});
 	}
@@ -438,15 +420,33 @@ public class WordBreaker extends JFrame {
 	}
 	
 	void saveAndExit() {
+		
+		if( !isStartButtonClicked ) {
+			// not playing game
+			return;
+		}
+		
+		// before load rank data
+		if( loadRankdDataFile() ) {
+			// exist file
+			ranklist.add( new UserRank( username, score ) );
+		} else {
+			// not exist file
+			ranklist.add( new UserRank( username, score ) );
+		}
+		
+		
 		FileOutputStream fos = null;
-		BufferedOutputStream bos = null;
+		ObjectOutputStream oos = null;
+		
+		
+		System.out.println( ranklist.toString() );
 		
 		try {
 			fos = new FileOutputStream( new File( savefile ) );
-			bos = new BufferedOutputStream( fos );
+			oos = new ObjectOutputStream( fos );
 			
-			String savedata = username + " " + String.valueOf( score );
-			bos.write( savedata.getBytes() );
+			oos.writeObject( ranklist );
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -456,7 +456,7 @@ public class WordBreaker extends JFrame {
 		} finally {
 				try {
 					if( fos != null ) fos.close();
-					if( bos != null ) fos.close();
+					if( oos != null ) oos.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -464,6 +464,53 @@ public class WordBreaker extends JFrame {
 		}
 		
 		System.exit( 0 );
+	}
+	
+	boolean loadRankdDataFile() {
+		
+		File file = 
+				new File( savefile );
+		
+		if( !file.exists() ) {
+			return false;
+		}
+		
+		FileInputStream fis = null;
+		ObjectInputStream ois = null;
+		
+		try {
+			fis = new FileInputStream( new File( savefile ) );
+			ois = new ObjectInputStream( fis );
+			
+			Object o = ois.readObject();
+			
+			if( o instanceof ArrayList ) {
+				ranklist = (ArrayList<UserRank>) o;
+			}
+			
+			// each score data sort
+			Collections.sort( ranklist );
+			
+		} catch (FileNotFoundException fnfe) {
+			// TODO Auto-generated catch block
+			fnfe.printStackTrace();
+		} catch (IOException ioe) {
+			// TODO Auto-generated catch block
+			ioe.printStackTrace();
+		} catch (ClassNotFoundException cnfe) {
+			// TODO Auto-generated catch block
+			cnfe.printStackTrace();
+		} finally {
+				try {
+					if( fis != null ) fis.close();
+					if( ois != null ) ois.close();
+				} catch (IOException ioe) {
+					// TODO Auto-generated catch block
+					ioe.printStackTrace();
+				}
+		}
+		
+		return true;
 	}
 
 	public static void main(String[] args) {
