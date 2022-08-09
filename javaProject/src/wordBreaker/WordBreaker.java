@@ -23,7 +23,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -426,19 +429,25 @@ public class WordBreaker extends JFrame {
 			return;
 		}
 		
-		// before load rank data
-		if( loadRankdDataFile() ) {
-			// exist file
-			ranklist.add( new UserRank( username, score ) );
-		} else {
-			// not exist file
-			ranklist.add( new UserRank( username, score ) );
+		loadRankdDataFile();
+		
+		// check duplicate username
+		boolean existUsername = false;
+		for( int idx = 0; idx < ranklist.size(); idx++ ) {
+			if( ranklist.get( idx ).getName().equals( username ) ) {
+				ranklist.get( idx ).setScore( score );
+				existUsername = true;
+				break;
+			}
 		}
 		
-		
+		if( !existUsername ) {
+			ranklist.add( new UserRank( username, score ) );
+		}
+
+		// save object
 		FileOutputStream fos = null;
 		ObjectOutputStream oos = null;
-		
 		
 		System.out.println( ranklist.toString() );
 		
@@ -463,13 +472,13 @@ public class WordBreaker extends JFrame {
 				}
 		}
 		
+		// exit
 		System.exit( 0 );
 	}
 	
 	boolean loadRankdDataFile() {
 		
-		File file = 
-				new File( savefile );
+		File file = new File( savefile );
 		
 		if( !file.exists() ) {
 			return false;
