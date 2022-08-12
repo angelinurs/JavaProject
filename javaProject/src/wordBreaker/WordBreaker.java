@@ -251,9 +251,12 @@ public class WordBreaker extends JFrame {
 					
 					Iterator<UserRank> it = ranklist.iterator();
 					
+					int count = 1;
 					StringBuffer sb = new StringBuffer();
+					
 					while( it.hasNext() ) {
 						UserRank userScore = it.next();
+						sb.append( count++ ).append( " rank _ ");
 						sb.append( userScore.toString() );
 						sb.append( "\n" );
 					}
@@ -498,6 +501,13 @@ public class WordBreaker extends JFrame {
 			
 			// each score data sort
 			Collections.sort( ranklist );
+			
+			// ranklist resizable limit rank 5
+			int objSize = ranklist.size();
+			while( objSize > 5 ) {
+				ranklist.remove( objSize-1 );
+				--objSize;
+			}
 			
 		} catch (FileNotFoundException fnfe) {
 			// TODO Auto-generated catch block
