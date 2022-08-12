@@ -123,6 +123,7 @@ public class WordBreaker extends JFrame {
 		
 		setBounds( 300, 300, 300, 500 );
 		setVisible( true );
+		setResizable( false );
 		
 		setEvent();
 		
