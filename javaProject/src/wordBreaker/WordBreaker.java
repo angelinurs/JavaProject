@@ -159,8 +159,7 @@ public class WordBreaker extends JFrame {
 		idTextfield.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
-				username =  idTextfield.getText().trim();
-				cards.show( WordBreaker.this.getContentPane(), "game" );
+				doLoginAction();
 			}
 		});
 		
@@ -168,9 +167,7 @@ public class WordBreaker extends JFrame {
 		loginBtn.addActionListener( new ActionListener() {
 			
 			@Override public void actionPerformed(ActionEvent e) {
-				username =  idTextfield.getText().trim();
-				cards.show( WordBreaker.this.getContentPane(), "game" );
-				
+				doLoginAction();
 			}
 		});
 		
@@ -388,6 +385,7 @@ public class WordBreaker extends JFrame {
 		add( "game", gameCard );
 	}
 	
+	// convert to Iterator object 
 	ArrayList<WordVO> getCloneWords()	{
 		return (ArrayList<wordBreaker.WordVO>) wordVoList.clone();
 	}
@@ -521,6 +519,22 @@ public class WordBreaker extends JFrame {
 		}
 		
 		return true;
+	}
+	
+	// loginBtn, idTextfield add actionlistener
+	public void doLoginAction() {
+		String temp = idTextfield.getText().trim();
+		
+		if( temp.length() < 1 ) {
+			JOptionPane.showMessageDialog(this, "retry input username" );
+			idTextfield.setText( "" );
+			idTextfield.requestFocus();
+			return;
+		}
+		
+		username =  temp;
+		
+		cards.show( WordBreaker.this.getContentPane(), "game" );
 	}
 
 	public static void main(String[] args) {
