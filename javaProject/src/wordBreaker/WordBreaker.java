@@ -228,7 +228,7 @@ public class WordBreaker extends JFrame {
 						WordVO vo = it.next();
 						
 						if( keyword.equals( vo.text ) ) {
-							System.out.println( keyword + ", " + vo.text );
+//							System.out.println( keyword + ", " + vo.text );
 							wordVoList.remove( vo );
 							
 							scoreLabel.setText( String.valueOf( score += 10 ) );
@@ -451,7 +451,7 @@ public class WordBreaker extends JFrame {
 		FileOutputStream fos = null;
 		ObjectOutputStream oos = null;
 		
-		System.out.println( ranklist.toString() );
+//		System.out.println( ranklist.toString() );
 		
 		try {
 			fos = new FileOutputStream( new File( savefile ) );
